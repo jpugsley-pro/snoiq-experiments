@@ -1,0 +1,25 @@
+# Docker Compose file to set up MinIO and MLflow services
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio12345
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "./.minio:/data"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.5.1
+    command: mlflow server --host 0.0.0.0 --port 5001 --backend-store-uri sqlite:///mlflow.db --default-artifact-root s3://mlflow/
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio12345
+    ports:
+      - "5001:5001"
+    depends_on:
+      - minio

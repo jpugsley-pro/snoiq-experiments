@@ -1,3 +1,47 @@
-# pixi environments
-.pixi/*
-!.pixi/config.toml
+# --- Python / build ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.log
+
+# --- Pixi / environments ---
+.pixi/
+!.pixi/config.toml  # keep Pixi project settings tracked
+
+# --- DVC ---
+.dvc/cache/
+.dvc/tmp/
+.dvc/state/
+.dvc/lock
+.dvcignore
+
+# --- MinIO / Docker volumes ---
+.minio/
+mlflow.db
+mlruns/
+.env
+.env.*
+
+# --- Jupyter / notebooks ---
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+.notebooktmp/
+
+# --- Data artifacts ---
+data/**/*.npz
+data/**/*.parquet
+data/**/*.tif
+data/**/*.grib2
+data/**/*.csv
+!data/golden/            # allow small test CSVs
+!data/raw/mrms/          # allow tiny MRMS samples if needed
+
+# --- VS Code / editor ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- Misc ---
+*.bak
+*.swp
