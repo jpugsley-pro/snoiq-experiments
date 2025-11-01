@@ -1,0 +1,5 @@
+outs:
+- md5: 3a3c212157366dbccac6a66ad814fdc7
+  size: 8192
+  hash: md5
+  path: dummy.bin
