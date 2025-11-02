@@ -1,26 +1,29 @@
 # Makefile
-.PHONY: up down lab test lint type logs verify
+.PHONY: setup up down tests lint type lab verify clean
+
+setup:
+    @pixi install
 
 up:
-	docker compose up -d
+    @docker compose up -d
 
 down:
-	docker compose down
+    @docker compose down -v
 
-lab:
-	pixi run lab
-
-test:
-	pixi run tests
+tests:
+    @pixi run tests
 
 lint:
-	pixi run lint
+    @pixi run lint
 
 type:
-	pixi run typecheck
+    @pixi run type
 
-logs:
-	docker compose logs -f db
+lab:
+    @pixi run lab
 
-verify:
-	pixi run lint && pixi run typecheck && pixi run tests
+verify: lint type tests
+
+clean:
+    @find . -name "__pycache__" -type d -prune -exec rm -rf {} +; \
+    rm -rf .pytest_cache .mypy_cache
