@@ -1,107 +1,133 @@
 # Experiment Workbench
 
-This repository is the central R&D workbench for SnoIQ. It is used for prototyping, experimentation, and validating pipelines before they are "graduated" to production-ready microservices.
+This is the central R&D workbench for SnoIQ. Prototype in notebooks, then “graduate” clean logic into `src/` with tests. The **single project manifest** is `pyproject.toml` (Pixi workspace + tasks + tooling). 
+
+## Quick Start
+
+```bash
+pixi install
+make up             # starts MinIO and MLflow (local)
+pixi run lab        # JupyterLab
+pixi run tests      # runs pytest (PYTHONPATH=. set in task)
+```
+
+### VS Code
+
+- Interpreter: `.pixi/envs/default/bin/python`
+- Tasks: `Terminal → Run Task…` (Pixi: tests/lint/type/lab; Docker up/down; MLflow UI; Prefect UI)
+
+---
 
 ## Folder Structure & Reasoning
 
 ### `/data`
 
-* **Purpose:** To hold small, sample data files for quick, local tests.
-* **Contains:** Sample `.grib2` files, `.tif` files, or small CSVs.
-* **NOTE:** This folder is **NOT** for the multi-terabyte dataset. The full dataset is versioned with **DVC** and stored in our object storage (MinIO). This folder is only for files small enough to commit to Git (or be used in a quick test).
+- **Purpose:** Small, sample files for quick local tests.
+- **Contains:** Tiny `.grib2`, `.nc`, `.csv`, and golden fixtures checked into Git.
+- **Not here:** Large datasets (HRRR, MRMS archives, etc.) — use DVC + MinIO/S3.
 
 ### `/notebooks`
 
-* **Purpose:** The R&D "sandbox." This is where all interactive experimentation, data exploration, and model prototyping happens.
-* **Contains:** `.ipynb` (Jupyter) files.
-* **Workflow:** This folder is expected to be "messy." It's a lab notebook for trying new ideas. When a concept is proven, the clean logic is "graduated" into the `/src` folder.
+- **Purpose:** Messy R&D sandbox for exploration and prototyping.
+- **Workflow:** When a concept is proven, “graduate” clean functions into `/src` and add tests.
 
-### `/src`
+### `/src` (package)
 
-* **Purpose:** To store clean, reusable, production-quality code.
-* **Contains:** `.py` Python files, organized as a proper package.
-* **Workflow:** Code here should be well-documented and unit-tested. Notebooks in `/notebooks` should import functions *from* this folder. This is the "contract" we hand off to our coding agents for final delivery.
+- **Purpose:** Clean, reusable, tested code (importable via `from src.*`).
+- **Highlights (current):**
+  - `ingestion/mrms.py` → `open_mrms_qpe()` (canonical MRMS QPE loader)
+  - `ingestion/uscrn.py` → `open_uscrn_hourly()` (fixture-based CRNH02 parser)
+  - `physics/snow.py` → SLR temp ramp + conversions
 
 ### `/tests`
 
-* **Purpose:** To hold the "golden tests" and unit tests for the code in `/src`.
-* **Contains:** `test_*.py` files (using `pytest`).
-* **Workflow:** These tests are the "contract" for our agents. When an agent refactors code in `/src`, its primary goal is to ensure all tests in this folder pass.
+- **Purpose:** Golden tests + unit tests that define contracts.
+- **Current:**
+  - `test_ingestion.py` (MRMS contract)
+  - `test_ingestions_uscrn.py` (USCRN fixture contract)
+- **How imports work:** `pyproject.toml` sets the tests task to `PYTHONPATH=.`, so `from src.*` resolves without extra hacks.
 
 ---
 
-### Project Folder Structure (The "Blueprint")
+## Project Blueprint (Aspirational Map)
 
-```markdown
+```text
 snoiq-experiments/
+├── .pixi/                 # (ignored) Pixi env files
+├── .dvc/                  # (tracked) DVC metadata; secrets in .dvc/config.local only
+├── .vscode/               # VS Code config for interpreter + tasks
 │
-├── .pixi/                # (Ignored by Git) The local environment managed by pixi
-├── .dvc/                 # (Checked into Git) DVC's internal metadata
-├── .dvcignore            # (Checked into Git) Tells DVC to ignore temp files
-├── .gitignore            # (Checked into Git) Ignores .pixi/, .venv/, __pycache__/
-│
-├── pixi.toml             # 🔵 The MASTER file for your environment (replaces requirements.txt)
-├── pixi.lock             # 🔵 The lockfile that makes your environment reproducible
+├── pyproject.toml         # 🔵 Single manifest (Pixi workspace + tasks + tooling)
+├── pixi.lock              # 🔵 Reproducible lockfile
 │
 ├── data/
-│   │   # This folder contains sample data for testing
 │   ├── raw/
-│   │   └── sample_hrrr_run.grib2
-│   │
-│   ├── grids/
-│   │   │   # This .npz file is your "source artifact"
-│   │   ├── grid_latlon__model-HRRRv4.npz.dvc   <-- 1KB DVC pointer file
-│   │   └── .gitignore                          <-- Ignores the actual .npz file
-│   │
-│   └── (Your 6TB Parquet Data Lake is NOT here. It's in MinIO, managed by DVC)
+│   │   └── mrms/…         # tiny sample GRIB2 files for tests
+│   ├── refs/
+│   │   └── UserTable_MRMS_v12.2.csv
+│   └── golden/
+│       ├── mrms_qpe01h_pass2_crop.nc
+│       └── uscrn_hourly_sample.txt
 │
-├── notebooks/            # 🔬 Your R&D "lab" for messy, interactive experiments
-│   ├── 01-ingestion/
-│   │   ├── test_grib_parsing.ipynb
-│   │   └── test_homr_api.ipynb
-│   │
-│   ├── 02-feature-engineering/
-│   │   └── test_grid_join.ipynb
-│   │
-│   └── 03-training/
-│       └── initial_model_training.ipynb
+├── notebooks/
+│   └── 01-ingestion/
+│       └── mrms.ipynb
 │
-├── src/                  # 📦 Your clean, reusable Python package
-│   ├── __init__.py
-│   │
+├── src/
 │   ├── ingestion/
-│   │   ├── hrrr.py       # <-- Your graduated, clean HRRR Prefect flow
-│   │   └── uscrn.py      # <-- Your graduated, clean USCRN flow
-│   │
-│   ├── features/
-│   │   ├── grid.py       # <-- Your `get_5x5_grid` function
-│   │   └── build_features.py
-│   │
-│   ├── training/
-│   │   └── train.py      # <-- Your graduated `mlflow` training script
-│   │
-│   └── models/
-│       └── schema.py     # <-- Your Postgres table definitions (GridReference)
+│   │   ├── mrms.py        # canonical MRMS loader (cfgrib→fallback to pygrib)
+│   │   └── uscrn.py       # defensive CRNH02 parser (fixture-driven)
+│   └── physics/
+│       └── snow.py        # SLR (v0), conversions
 │
-└── tests/                #  CONTRACT: The "golden tests" for your agent
+└── tests/
     ├── test_ingestion.py
-    └── test_features.py
+    └── test_ingestions_uscrn.py
 ```
 
-### The Core Workflow (How You Use It)
+---
 
-1. Setup: You run `pixi install` once. This builds your complete environment (Python, CUDA, Pygrib, etc.).
+## Services
 
-2. R&D: You run `pixi run jupyter lab` (or just open a `.ipynb` file in VS Code). You experiment in the `notebooks/` folder.
+- **MinIO:** S3-compatible local object store. Buckets: `snoiq-experiments`, `mlflow`.
+- **MLflow:** UI served via Docker; Python lib version pinned in `pyproject.toml`.
+- **DVC:** Remote = MinIO (`.dvc/config.local` stores creds). Avoid committing secrets.
 
-3. Graduate: You copy/paste your working functions from the notebook into the `src/` folder.
+---
 
-4. Test: You write a "golden test" in the `tests/` folder to prove your `src/` code works.
+## Known Contracts (what tests assert)
 
-5. Run Pipeline: You run your full, clean pipelines using `prefect` and `pixi`:
+- **MRMS QPE (1h Pass2):**
+  - `open_mrms_qpe(path)` → `xarray.DataArray`
+  - `name="QPE_01H_Pass2"`, `units="mm"`
+  - dims = `("latitude","longitude")`, non-negative values
+  - attrs include `product_token`, `filename`, `source`, optional MRMS table enrichment
 
-   * `pixi run python src/ingestion/hrrr.py` (to run the Prefect flow)
+- **USCRN Hourly Fixture:**
+  - `open_uscrn_hourly(path)` → `polars.DataFrame`
+  - Columns: `wban`, `timestamp_utc`, `t_air_c`, `precip_mm`, `qc_flags`
+  - Timestamps match `T\d{2}:00:00Z`
 
-   * `pixi run python src/training/train.py` (to run the MLflow training)
+---
 
-6. Handoff: You give your coding agent the `src/` code and `tests/` as its "contract" to build the production repos.
+## Next Steps (Milestones)
+
+- **M3 — SLR Prototype:** v1 vertical-profile proxy (Kuchera-style); tests with synthetic profiles.
+- **M4 — Event Segmentation:** Adaptive 3–6h dry-gap; tests on synthetic sequences.
+- **M5 — Feature Assembly:** Join MRMS, CRN, topography/landcover → training parquet; schema + record count tests.
+- **M6 — MLflow Baseline:** Train/log baseline model to MinIO-backed MLflow.
+- **M7 — Promotion Gate:** Split into repos; carry golden tests in CI.
+
+---
+
+## Tips
+
+- In notebooks, add at top:
+  ```py
+  import sys
+  from pathlib import Path
+  repo_root = Path("..").resolve().parent
+  if str(repo_root) not in sys.path:
+      sys.path.append(str(repo_root))
+  ```
+- Use `make verify` to run lint + typecheck + tests in one shot.

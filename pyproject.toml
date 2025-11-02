@@ -1,0 +1,85 @@
+[project]
+name = "snoiq-experiments"
+version = "0.1.0"
+description = "R&D workbench for SnoIQ (experiments → promoted code under src/)"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [{ name = "Jess Pugsley", email = "jpugsley@geekhands.com" }]
+
+# ── Pixi workspace config ───────────────────────────────────────────────────────
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+# All dependencies as a TOML table (key = version spec)
+[tool.pixi.dependencies]
+python = ">=3.13.9,<3.14"
+numpy = ">=2.3.4,<3"
+pandas = ">=2.3.3,<3"
+polars = ">=1.35.1,<2"
+xarray = ">=2025.10.1,<2026"
+cfgrib = ">=0.9.15.1,<0.10"
+eccodes = ">=2.44.0,<3"
+netcdf4 = ">=1.7.3,<2"
+zarr = ">=3.1.3,<4"
+fsspec = ">=2025.10.0,<2026"
+aiohttp = ">=3.13.2,<4"
+rasterio = ">=1.4.3,<2"
+rioxarray = ">=0.20.0,<0.21"
+pyproj = ">=3.7.2,<4"
+shapely = ">=2.1.2,<3"
+geopandas = ">=1.1.1,<2"
+pygrib = ">=2.1.6,<3"
+scikit-learn = ">=1.7.2,<2"
+xgboost = ">=3.0.5,<4"
+pydantic = ">=2.12.3,<3"
+ruff = ">=0.14.3,<0.15"
+mypy = ">=1.18.2,<2"
+pytest = ">=8.4.2,<9"
+pytest-cov = ">=7.0.0,<8"
+ipykernel = ">=7.1.0,<8"
+jupyterlab = ">=4.4.10,<5"
+duckdb = ">=1.4.1,<2"
+dvc = ">=3.63.0,<4"
+"dvc-s3" = ">=3.2.2,<4"
+boto3 = ">=1.40.49,<2"
+minio = ">=7.2.18,<8"
+prefect = ">=3.5.0,<4"
+mlflow = ">=3.5.1,<4"
+tenacity = ">=9.1.2,<10"
+tqdm = ">=4.67.1,<5"
+rich = ">=13.9.4,<14"
+python-dotenv = ">=1.2.1,<2"
+awscli = ">=2.31.27,<3"
+
+# Tasks mirror your pixi.toml tasks
+[tool.pixi.tasks]
+lab = "jupyter lab"
+tests = "PYTHONPATH=. pytest -q"
+lint = "ruff check src tests"
+typecheck = "mypy src"
+prefect-ui = "prefect server start"
+mlflow-ui = "mlflow ui --host 0.0.0.0 --port 5001"
+
+# ── Tooling configs for VS Code / Copilot / CI ───────────────────────────────
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["src"]  # so tests can import from src/ without sys.path hacks
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+select = ["E","F","I","UP","B","N","C90"]
+ignore = ["E501"]
+src = ["src","tests"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+mypy_path = "src"

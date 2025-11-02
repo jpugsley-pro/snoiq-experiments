@@ -45,3 +45,6 @@ data/**/*.csv
 # --- Misc ---
 *.bak
 *.swp
+# pixi environments
+.pixi/*
+!.pixi/config.toml

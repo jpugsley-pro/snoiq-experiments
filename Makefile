@@ -1,11 +1,11 @@
 # Makefile
-.PHONY: up down logs psql
+.PHONY: up down lab test lint type logs verify
 
 up:
 	docker compose up -d
 
 down:
-	docker compose down -v
+	docker compose down
 
 lab:
 	pixi run lab
@@ -22,5 +22,5 @@ type:
 logs:
 	docker compose logs -f db
 
-psql:
-	docker compose exec db psql -U snoiq -d snoiq_experiments
+verify:
+	pixi run lint && pixi run typecheck && pixi run tests
