@@ -56,7 +56,7 @@ awscli = ">=2.31.27,<3"
 [tool.pixi.tasks]
 lab = "jupyter lab"
 tests = "PYTHONPATH=. pytest -q"
-lint = "ruff check src tests"
+lint = "ruff check --fix src tests"      # <- apply safe fixes
 typecheck = "mypy src"
 prefect-ui = "prefect server start"
 mlflow-ui = "mlflow ui --host 0.0.0.0 --port 5001"
@@ -71,9 +71,11 @@ pythonpath = ["src"]  # so tests can import from src/ without sys.path hacks
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+src = ["src","tests"]
+
+[tool.ruff.lint]
 select = ["E","F","I","UP","B","N","C90"]
 ignore = ["E501"]
-src = ["src","tests"]
 
 [tool.mypy]
 python_version = "3.13"

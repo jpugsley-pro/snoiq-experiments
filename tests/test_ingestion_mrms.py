@@ -1,6 +1,8 @@
 # tests/test_ingestion_mrms.py
 from pathlib import Path
+
 from src.ingestion.mrms import open_mrms_qpe
+
 
 def test_mrms_qpe_contract():
     f = next(Path("data/raw/mrms").rglob("*.grib2"))

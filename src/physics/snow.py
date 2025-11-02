@@ -1,6 +1,8 @@
 # src/physics/snow.py
 from __future__ import annotations
+
 import xarray as xr
+
 
 def slr_temp_ramp(t2m_c: xr.DataArray | float) -> xr.DataArray:
     t = xr.DataArray(t2m_c) if not isinstance(t2m_c, xr.DataArray) else t2m_c

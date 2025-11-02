@@ -1,6 +1,8 @@
 # tests/test_ingestions_uscrn.py
 from pathlib import Path
+
 from src.ingestion.uscrn import open_uscrn_hourly
+
 
 def test_uscrn_parses_fixture():
     p = Path("data/golden/uscrn_hourly_sample.txt")

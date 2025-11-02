@@ -1,7 +1,8 @@
 # src/ingestion/uscrn.py
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Iterable, List, Dict
+
 import polars as pl
 
 # CRNH02 fixed-width (USCRN Hourly) minimal fields we care about
@@ -11,7 +12,7 @@ import polars as pl
 # Columns: WBAN, UTC datetime parts, air temp, precip, QC flags (strings)
 # We’ll parse from a few sample lines (fixture) first.
 
-def _parse_line(line: str) -> Dict[str, object]:
+def _parse_line(line: str) -> dict[str, object]:
     # Defensive: pad line to avoid IndexErrors on short lines
     s = line.rstrip("\n")
     if not s or s.startswith("#"):
@@ -55,7 +56,7 @@ def _parse_line(line: str) -> Dict[str, object]:
 
 def open_uscrn_hourly(path: str | Path) -> pl.DataFrame:
     p = Path(path)
-    rows: List[Dict[str, object]] = []
+    rows: list[dict[str, object]] = []
     with p.open("r", encoding="utf-8") as fp:
         for ln in fp:
             try:

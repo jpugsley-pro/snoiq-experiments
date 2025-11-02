@@ -1,8 +1,13 @@
 # src/ingestion/mrms.py
 from __future__ import annotations
-from pathlib import Path
-import re, numpy as np, xarray as xr, pygrib
+
 import csv
+import re
+from pathlib import Path
+
+import numpy as np
+import pygrib
+import xarray as xr
 
 # Minimal mapping from filename token → canonical name + attrs
 _CANON = {
@@ -44,8 +49,7 @@ def open_mrms_qpe(path: str | Path, user_table_csv: str | Path | None = None) ->
         first = list(ds.data_vars)[0]  # often 'unknown'
         da = ds[first].astype("float32")
     except Exception:
-        # pygrib may not have typed stubs; silence attribute warning for the call
-        with pygrib.open(str(f)) as g: # type: ignore[attr-defined]
+        with pygrib.open(str(f)) as g: # type: ignore
             msg = next(iter(g))
             data, lats, lons = msg.data()
         da = xr.DataArray(
