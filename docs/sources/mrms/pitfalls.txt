@@ -1,0 +1,100 @@
+# MRMS Pitfalls and Known Issues
+
+This document records quirks, gotchas, and sanity-check warnings encountered when working with **MRMS** data.
+
+---
+
+## 1. Variable naming inconsistencies
+
+Some MRMS GRIB2 files may contain missing or blank parameter names in their metadata. In such cases:
+- The filename token (e.g., `QPE_01H_Pass2`) is **authoritative** for identifying the product.
+- The GRIB2 table can be used for enrichment if the discipline/category/parameter numbers match.
+
+Workaround:
+- Always canonicalize from the filename, not `GRIB_NAME`.
+- Fall back to the reference CSV (`data/refs/UserTable_MRMS_v12.2.csv`) for missing keys.
+
+---
+
+## 2. GRIB2 Table Version Drift
+
+Each MRMS release (v11.x, v12.x, etc.) can slightly adjust parameter tables or units. As of this project, **v12.2** is the pinned reference.
+
+Recommendations:
+- Track the MRMS table version in test metadata (`attrs["mrms_table_version"]`).
+- Avoid mixing versions in long-running ingestion without validation.
+
+---
+
+## 3. Coordinate anomalies (Hawaii fix and others)
+
+Known correction in **v12.2**: Hawaii domain lat/lon coordinates were shifted due to half-cell offset in previous grids.
+
+Mitigation:
+- Always validate grid origin and cell spacing against official tables.
+- Implement unit tests for grid coordinate sanity.
+
+---
+
+## 4. Pass1 vs Pass2 latency confusion
+
+`Pass1` and `Pass2` accumulations differ by gauge assimilation window:
+- **Pass1**: Faster, fewer gauges.
+- **Pass2**: Slower, more gauges, higher quality.
+
+Ensure downstream logic explicitly documents which is being used.
+
+---
+
+## 5. Compression & streaming
+
+Most MRMS AWS data is delivered as `*.grib2.gz`.
+- Use `fsspec.open` or `smart_open` to stream and decompress transparently.
+- Avoid partial reads unless you know byte-range offsets.
+
+---
+
+## 6. Missing attributes / unknown discipline combinations
+
+Occasional GRIB2 records will not match any table entry due to experimental fields.
+- Log them under a `unknown_parameters.log` file for review.
+- Do not fail ingestion—skip or default to `NaN` values.
+
+---
+
+## 7. Data continuity gaps
+
+Operational MRMS occasionally drops hours during maintenance or radar outages.
+- Expect sporadic missing timestamps (especially near 00Z or major event windows).
+- Use checkpointing or backfill logic when ingesting long time ranges.
+
+---
+
+## 8. Units and accumulation window verification
+
+While QPE products are nominally in **mm**, confirm with table fields.
+- Some derived products (e.g., Snow Water Equivalent) may change units.
+- Never assume accumulation duration—always parse from the product name.
+
+---
+
+## 9. Grid alignment drift across regions
+
+CONUS, Alaska, and regional mosaics can have different coordinate extents and slight offset differences.
+- Ensure tests assert monotonic coordinate order.
+- Do not assume longitude starts exactly at -130.00.
+
+---
+
+## 10. Table / Product mismatches
+
+Sometimes the UserTable CSV version does not list new experimental products.
+- Add these manually or flag with `UNKNOWN_PRODUCT` until NSSL updates are merged upstream.
+
+---
+
+## References
+
+- https://www.nssl.noaa.gov/projects/mrms/
+- https://github.com/NOAA-National-Severe-Storms-Laboratory/mrms-support
+- https://registry.opendata.aws/noaa-mrms-pds/

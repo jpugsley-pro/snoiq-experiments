@@ -37,3 +37,12 @@ health:
 bucket:
 	@AWS_ACCESS_KEY_ID=minio AWS_SECRET_ACCESS_KEY=minio12345 AWS_DEFAULT_REGION=us-east-1 AWS_EC2_METADATA_DISABLED=true \
 	aws s3 mb s3://snoiq-experiments --endpoint-url http://127.0.0.1:9000 || true
+
+prefect-ui:
+	@xdg-open http://localhost:8080
+
+minio-ui:
+	@xdg-open http://localhost:9000/minio/login
+
+mlflow-ui:
+	@xdg-open http://localhost:5000
